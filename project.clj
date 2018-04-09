@@ -1,4 +1,4 @@
-(defproject org.clojars.quoll/naga-store "0.0.1"
+(defproject org.clojars.quoll/naga-store "0.0.2-SNAPSHOT"
   :description "Protocol library for Naga storage"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}

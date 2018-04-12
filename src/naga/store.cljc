@@ -1,6 +1,8 @@
-(ns ^{:doc "Storage API for Naga to talk to graph stores."
+(ns ^{:doc "Storage API for Naga to talk to graph stores. Also includes some utility functions."
       :author "Paula Gearon"}
-  naga.store)
+  naga.store
+  (:require #?(:clj  [schema.core :as s]
+               :cljs [schema.core :as s :include-macros true])))
 
 
 (defprotocol Storage
@@ -19,6 +21,8 @@
   (assert-schema-opts [store schema opts] "Inserts a new schema, if supported")
   (query-insert [store assertion-patterns patterns] "Resolves a set of patterns, joins them, and inserts the set of resolutions"))
 
+(def StorageType (s/pred #(satisfies? Storage %)))
+
 (defn assert-schema
   "Convenience function to avoid passing empty options"
   [store schema & {:as opts}]
@@ -33,14 +37,3 @@
   "Returns a keyword label for a node"
   [s n]
   (keyword "naga" (str "id-" (node-id s n))))
-
-(def registered-stores (atom {}))
-(def shutdown-fns (atom []))
-
-(defn register-storage!
-  "Registers a new storage type"
-  ([store-id factory-fn] (register-storage! store-id factory-fn nil))
-  ([store-id factory-fn shutdown-fn]
-   (swap! registered-stores assoc store-id factory-fn)
-   (when shutdown-fn (swap! shutdown-fns conj shutdown-fn))))
-

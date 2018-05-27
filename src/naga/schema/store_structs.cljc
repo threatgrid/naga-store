@@ -23,6 +23,19 @@
     EntityPattern
     EntityPropertyPattern))
 
+(s/defn epv-pattern? :- s/Bool
+  [pattern :- [s/Any]]
+  (and (vector? pattern)
+       (not (seq? (first pattern)))))
+
+(s/defn filter-pattern? :- s/Bool
+  [pattern :- [s/Any]]
+  (and (vector? pattern) (seq? (first pattern))))
+
+(s/defn op-pattern? :- s/Bool
+  [pattern :- [s/Any]]
+  (seq? pattern))
+
 (s/defn vartest? :- s/Bool
   [x]
   (and (symbol? x) (boolean (#{\? \%} (first (name x))))))

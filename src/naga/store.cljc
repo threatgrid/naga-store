@@ -18,6 +18,7 @@
   (count-pattern [store pattern] "Counts the size of a pattern resolition against storage")
   (query [store output-pattern patterns] "Resolves a set of patterns (if not already resolved), joins the results, and projects the output. The output can contain constant values as well as selected variables.")
   (assert-data [store data] "Inserts new axioms")
+  (retract-data [store data] "Removes existing axioms")
   (assert-schema-opts [store schema opts] "Inserts a new schema, if supported")
   (query-insert [store assertion-patterns patterns] "Resolves a set of patterns, joins them, and inserts the set of resolutions"))
 

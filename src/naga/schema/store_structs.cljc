@@ -23,6 +23,19 @@
     EntityPattern
     EntityPropertyPattern))
 
+(s/defn epv-pattern? :- s/Bool
+  [pattern :- [s/Any]]
+  (and (vector? pattern)
+       (not (seq? (first pattern)))))
+
+(s/defn filter-pattern? :- s/Bool
+  [pattern :- [s/Any]]
+  (and (vector? pattern) (seq? (first pattern))))
+
+(s/defn op-pattern? :- s/Bool
+  [pattern :- [s/Any]]
+  (seq? pattern))
+
 (s/defn vartest? :- s/Bool
   [x]
   (and (symbol? x) (boolean (#{\? \%} (first (name x))))))
@@ -32,10 +45,16 @@
   [pattern :- EPVPattern]
   (filter vartest? pattern))
 
-;; filters are executable lists destined for eval
-(def FilterPattern (s/pred list?))
+(def Operators (s/enum 'or 'not 'OR 'NOT))
 
-(def Pattern (s/if list? FilterPattern EPVPattern))
+;; filters are a vector with an executable list destined for eval
+(def FilterPattern (s/pred #(and (vector? %) (list? (first %)))))
+
+(def OpPattern (s/constrained (s/pred list?)
+                              [(s/one Operators "operator") EPVPattern])) 
+
+(def Pattern (s/if list? OpPattern
+               (s/if (comp list? first) FilterPattern EPVPattern)))
 
 (def Value (s/pred (complement symbol?) "Value"))
 

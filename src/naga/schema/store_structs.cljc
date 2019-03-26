@@ -1,4 +1,5 @@
 (ns naga.schema.store-structs
+  #?(:cljs (:refer-clojure :exclude [Var]))
   (:require #?(:clj  [schema.core :as s]
                :cljs [schema.core :as s :include-macros true])))
 
@@ -56,17 +57,19 @@
        (let [[e v] p]
          (and (vartest? v) (sequential? e) (not (vector? e))))))
 
+(def operators ['and 'AND 'or 'not 'OR 'NOT])
+
 (s/defn op-pattern? :- s/Bool
-  [pattern :- [s/Any]]
-  (seq? pattern))
+  [[op :as pattern] :- [s/Any]]
+  (and (list-like? pattern) (boolean (some (partial = op) operators))))
 
-(def Operators (s/enum 'or 'not 'OR 'NOT))
+(def Operators (apply s/enum operators))
 
-;; filters are a vector with an executable list destined for eval
 (defn unnested-list?
   [[fl :as l]]
-  (and (vector l) (list-like? fl) (not-any? list-like? fl)))
+  (and (vector? l) (list-like? fl) (not-any? list-like? fl)))
 
+;; filters are a vector with an executable list destined for eval
 (def FilterPattern (s/constrained [(s/one [s/Any] "Predicate")]
                                   unnested-list?))
 
@@ -74,11 +77,17 @@
                                  (s/one Var "Binding var")]
                                 unnested-list?))
 
-(def OpPattern (s/constrained [(s/one Operators "operator") EPVPattern]
+(declare Pattern)
+
+(def OpPattern (s/constrained [(s/one Operators "operator")
+                               (s/one (s/recursive #'Pattern) "first pattern")
+                               (s/recursive #'Pattern)]
                               list-like?)) 
 
-(def Pattern (s/if list? OpPattern
-               (s/if (comp list? first) FilterPattern EPVPattern)))
+(def Pattern (s/if list-like? OpPattern
+               (s/if (comp list-like? first)
+                 (s/if (comp nil? second) FilterPattern EvalPattern)
+                 EPVPattern)))
 
 (def Value (s/pred (complement symbol?) "Value"))
 

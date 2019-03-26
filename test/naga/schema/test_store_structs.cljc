@@ -2,7 +2,9 @@
    (:require [clojure.test :as t :refer [testing is run-tests]]
              [naga.schema.store-structs
               :refer [EntityPropertyElt EntityPropertyPattern EPVPattern epv-pattern?
-                      Var vartest? FilterPattern filter-pattern? EvalPattern eval-pattern?]]
+                      Var vartest? FilterPattern filter-pattern? EvalPattern eval-pattern?
+                      list-like? unnested-list?
+                      OpPattern op-pattern?]]
              #?(:clj  [schema.core :as s]
                 :cljs [schema.core :as s :include-macros true])
              #?(:clj  [schema.test :as st :refer [deftest]]
@@ -21,6 +23,21 @@
         #?(:clj ExceptionInfo :cljs :default)
         #"Value does not match schema"
         (do (s/validate type form) (println form)))))
+
+(deftest test-lists
+  (is (list-like? '(1 2 3)))
+  (is (list-like? '()))
+  (is (list-like? (map inc [1 2 3])))
+  (is (not (list-like? nil)))
+  (is (not (list-like? [])))
+  (is (not (list-like? [1 2 3])))
+  (is (not (list-like? "1 2 3")))
+  
+  (is (unnested-list? '[(= ?x 5)]))
+  (is (unnested-list? '[(= 5 5)]))
+  (is (not (unnested-list? '((= ?x 5)))))
+  (is (not (unnested-list? '(= ?x 5))))
+  (is (not (unnested-list? '[(and (> ?x 5) (< ?x 10))]))))
 
 (deftest test-var
   (s/validate Var '?x)
@@ -89,5 +106,30 @@
   (is (not (eval-pattern? '[(+ ?x ?y) (- ?x ?y)])))
   (is (not (eval-pattern? '[(+ ?x ?y)])))
   (is (not (eval-pattern? '[]))))
+
+(deftest test-op-pattern
+  (s/validate OpPattern '(not [?x :property "value"]))
+  (s/validate OpPattern '(NOT [?x :property "value"]))
+  (s/validate OpPattern '(or [?x :property "value"] [?x :property "other"]))
+  (s/validate OpPattern '(not (and [?x :property "value"] [?x :prop2 "value"])))
+  (s/validate OpPattern '(or (and [?x :property "value"] [?x :prop2 "value"])
+                             (and [?x :property "other"] [?x :prop2 "other"])))
+  (is (op-pattern? '(not [?x :property "value"])))
+  (is (op-pattern? '(NOT [?x :property "value"])))
+  (is (op-pattern? '(or [?x :property "value"] [?x :property "other"])))
+  (is (op-pattern? '(not (and [?x :property "value"] [?x :prop2 "value"]))))
+  (is (op-pattern? '(or (and [?x :property "value"] [?x :prop2 "value"])
+                             (and [?x :property "other"] [?x :prop2 "other"]))))
+  (schema-throws? OpPattern '(or))
+  (schema-throws? OpPattern '[or [?x :property "value"] [?x :property "other"]])
+  (schema-throws? OpPattern '(xor [?x :property "value"] [?x :property "other"]))
+  (schema-throws? OpPattern '[?x :property "value"])
+  (schema-throws? OpPattern '[(= ?x ?y) ?z])
+  (schema-throws? OpPattern '[(= ?x ?y)])
+  (is (not (op-pattern? '[or [?x :property "value"] [?x :property "other"]])))
+  (is (not (op-pattern? '(xor [?x :property "value"] [?x :property "other"]))))
+  (is (not (op-pattern? '[?x :property "value"])))
+  (is (not (op-pattern? '[(= ?x ?y) ?z])))
+  (is (not (op-pattern? '[(= ?x ?y)]))))
 
 #?(:cljs (run-tests))

@@ -23,18 +23,14 @@
     EntityPattern
     EntityPropertyPattern))
 
+;; Less restrictive than EPVPattern, because this is called at runtime
 (s/defn epv-pattern? :- s/Bool
   [pattern :- [s/Any]]
   (and (vector? pattern)
-       (not (seq? (first pattern)))))
+       (let [f (first pattern)]
+         (and (boolean f) (not (seq? f))))))
 
-(s/defn filter-pattern? :- s/Bool
-  [pattern :- [s/Any]]
-  (and (vector? pattern) (seq? (first pattern))))
-
-(s/defn op-pattern? :- s/Bool
-  [pattern :- [s/Any]]
-  (seq? pattern))
+(def Var (s/constrained s/Symbol (comp #{\? \%} first name)))
 
 (s/defn vartest? :- s/Bool
   [x]
@@ -45,13 +41,41 @@
   [pattern :- EPVPattern]
   (filter vartest? pattern))
 
+(defn list-like? [x] (and (sequential? x) (not (vector? x))))
+
+(s/defn filter-pattern? :- s/Bool
+  [pattern :- [s/Any]]
+  (and (vector? pattern) (list-like? (first pattern)) (nil? (second pattern))))
+
+(defn eval-pattern?
+  "eval bindings take the form of [expression var] where the
+   expression is a list-based s-expression. It binds the var
+   to the result of the expression."
+  [p]
+  (and (vector? p) (= 2 (count p)) 
+       (let [[e v] p]
+         (and (vartest? v) (sequential? e) (not (vector? e))))))
+
+(s/defn op-pattern? :- s/Bool
+  [pattern :- [s/Any]]
+  (seq? pattern))
+
 (def Operators (s/enum 'or 'not 'OR 'NOT))
 
 ;; filters are a vector with an executable list destined for eval
-(def FilterPattern (s/pred #(and (vector? %) (list? (first %)))))
+(defn unnested-list?
+  [[fl :as l]]
+  (and (vector l) (list-like? fl) (not-any? list-like? fl)))
 
-(def OpPattern (s/constrained (s/pred list?)
-                              [(s/one Operators "operator") EPVPattern])) 
+(def FilterPattern (s/constrained [(s/one [s/Any] "Predicate")]
+                                  unnested-list?))
+
+(def EvalPattern (s/constrained [(s/one [s/Any] "Expression")
+                                 (s/one Var "Binding var")]
+                                unnested-list?))
+
+(def OpPattern (s/constrained [(s/one Operators "operator") EPVPattern]
+                              list-like?)) 
 
 (def Pattern (s/if list? OpPattern
                (s/if (comp list? first) FilterPattern EPVPattern)))

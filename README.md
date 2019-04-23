@@ -2,6 +2,8 @@
 
 This library contains the protocol necessary for integrating a graph database into Naga.
 
+[![Clojars Project](http://clojars.org/org.clojars.quoll/naga-store/latest-version.svg)](http://clojars.org/org.clojars.quoll/naga-store)
+
 ## Usage
 
 Import/require the naga-store.core namespace and implement the Storage protocol according

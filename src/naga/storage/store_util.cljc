@@ -107,7 +107,9 @@
         columns (:cols (meta data))
         pattern->data (offset-mappings storage full-pattern columns data)
         nodes (new-nodes pattern->data)]
-    (map #(project-row storage full-pattern nodes pattern->data %) data)))
+    (with-meta
+      (map #(project-row storage full-pattern nodes pattern->data %) data)
+      {:cols full-pattern})))
 
 (s/defn insert-project :- Results
   "Similar to project, only the generated data will be in triples for insertion.

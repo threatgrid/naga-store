@@ -1,4 +1,4 @@
-(defproject org.clojars.quoll/naga-store "0.3.2"
+(defproject org.clojars.quoll/naga-store "0.3.2-SNAPSHOT"
   :description "Protocol library for Naga storage"
   :url "https://github.com/threatgrid/naga-store"
   :license {:name "Eclipse Public License"

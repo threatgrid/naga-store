@@ -1,7 +1,6 @@
 (ns naga.util
     "The ubiquitous utility namespace that every project seems to have"
-    (:require [schema.core :as s :refer [=>]]
-               #?(:cljs [cljs.js :as cjs :refer [eval empty-state js-eval]]))
+    (:require [schema.core :as s :refer [=>]])
     #?(:clj (:import [clojure.lang Var])))
 
 ;; NOTE: The ClojureScript functions can give inconsistent results, particularly when using eval
@@ -9,7 +8,7 @@
 #?(:clj
    (s/defn get-fn-reference :- (s/maybe Var)
      "Looks up a namespace:name function represented in a keyword,
-   and if it exists, return it. Otherwise nil"
+      and if it exists, return it. Otherwise nil"
      [kw :- (s/cond-pre s/Keyword s/Symbol)]
      (let [kns (namespace kw)
            snm (symbol (name kw))]
@@ -23,17 +22,7 @@
      "Looks up a namespace:name function represented in a keyword,
       and if it exists, return it. Otherwise nil"
      [kw :- (s/cond-pre s/Keyword s/Symbol)]
-     (binding [cljs.analyzer/*cljs-warning-handlers* []]
-       (try
-         (when-let [nms (namespace kw)]
-           (when (find-ns (symbol nms))
-             (let [snm (symbol nms (name kw))]
-               (:value
-                (cljs.js/eval (cljs.js/empty-state)
-                              snm
-                              {:eval cljs.js/js-eval :source-map true :context :expr}
-                              identity)))))
-         (catch :default _ )))))
+     (throw (ex-info "eval not supported in web environment" {:error "No eval support"}))))
 
 #?(:clj
    (def c-eval clojure.core/eval)
@@ -42,19 +31,7 @@
    (defn c-eval
      "Equivalent to clojure.core/eval. Returns nil on error."
      [expr & {:as opts}]
-     (try
-       (let [def-opts {:eval cjs/js-eval :source-map true :context :expr}
-             op (if opts
-                  (merge def-opts opts)
-                  def-opts)
-             {:keys [error value]} (cjs/eval (cjs/empty-state)
-                                             expr
-                                             op
-                                             identity)]
-         (if error
-           ((.-log js/console) error)
-           value))
-       (catch :default e ((.-log js/console) e) nil))))
+     (throw (ex-info "eval not supported in web environment" {:error "No eval support"}))))
 
 #?(:cljs (def raw-lookup {'= = 'not= not= '< < '> > '<= <= '>= >=}))
 #?(:cljs (def known-namespaces {'cljs.core (ns-publics 'cljs.core)
@@ -81,7 +58,8 @@
             (let [ons-symbol (symbol ons-str)]
               (if-let [ns->functions (known-namespaces ons-symbol)]
                 (get ns->functions (symbol (name op-symbol)))
-                (c-eval op-symbol)))
+                (throw (ex-info (str "Unable to resolve symbol '" op-symbol " in " ons-str)
+                         {:op op-symbol :namespace ons-str}))))
             (or (resolve-symbol 'clojure.core op-symbol)
                 (resolve-symbol 'cljs.core op-symbol)))
           (raw-lookup op-symbol)

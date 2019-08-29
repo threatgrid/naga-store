@@ -1,9 +1,17 @@
 (ns naga.util
     "The ubiquitous utility namespace that every project seems to have"
-    (:require [schema.core :as s :refer [=>]])
+    (:require [schema.core :as s :refer [=>]]
+     #?(:cljs [clojure.string]))
     #?(:clj (:import [clojure.lang Var])))
 
-;; NOTE: The ClojureScript functions can give inconsistent results, particularly when using eval
+;; NOTE: this code avoids cljs.js due to inconsistency in how it gets loaded in standard configurations
+
+#?(:cljs (def known-namespaces {'cljs.core (ns-publics 'cljs.core)
+                                'clojure.core (ns-publics 'cljs.core)
+                                'clojure.string (ns-publics 'clojure.string)
+                                "cljs.core" (ns-publics 'cljs.core)
+                                "clojure.core" (ns-publics 'cljs.core)
+                                "clojure.string" (ns-publics 'clojure.string)}))
 
 #?(:clj
    (s/defn get-fn-reference :- (s/maybe Var)
@@ -22,7 +30,10 @@
      "Looks up a namespace:name function represented in a keyword,
       and if it exists, return it. Otherwise nil"
      [kw :- (s/cond-pre s/Keyword s/Symbol)]
-     (throw (ex-info "eval not supported in web environment" {:error "No eval support"}))))
+     (let [kns (namespace kw)
+           kw-ns (known-namespaces kns)
+           snm (symbol (name kw))]
+       (when kw-ns (kw-ns snm)))))
 
 #?(:clj
    (def c-eval clojure.core/eval)
@@ -34,9 +45,6 @@
      (throw (ex-info "eval not supported in web environment" {:error "No eval support"}))))
 
 #?(:cljs (def raw-lookup {'= = 'not= not= '< < '> > '<= <= '>= >=}))
-#?(:cljs (def known-namespaces {'cljs.core (ns-publics 'cljs.core)
-                                'clojure.core (ns-publics 'clojure.core)}))
-
 #?(:clj
    (defn fn-for
      "Converts a symbol or string representing an operation into a callable function"
@@ -90,8 +98,8 @@
    value returned by the predicate."
   [p
    s :- [s/Any]]
-  (let [d (map (fn [x] (if (p x) [x nil] [nil x])) s)]
-    [(keep first d) (keep second d)]))
+  (let [decision-map (group-by p s)]
+    [(get decision-map true) (get decision-map false)]))
 
 (defn fixpoint
   "Applies the function f to the value a. The function is then,

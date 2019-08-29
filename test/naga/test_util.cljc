@@ -18,18 +18,17 @@
       (is (every? k2 (map f2 input)))
       (is (every? #(= (map2 (f2 %)) (f3 %)) input)))))
 
-#?(:clj
-  (deftest test-get-fn-ref
-    (let [m' (get-fn-reference :map)
-          i' (get-fn-reference 'inc)
-          m (get-fn-reference :clojure.core/map)
-          i (get-fn-reference 'clojure.core/inc)
-          j (get-fn-reference :clojure.string/join)]
-      (is (nil? m'))
-      (is (nil? i'))
-      (is (= (map inc (range 10))
-             (m i (range 10))))
-      (is (= "1,2" (j "," [1 2]))))))
+(deftest test-get-fn-ref
+  (let [m' (get-fn-reference :map)
+        i' (get-fn-reference 'inc)
+        m (get-fn-reference :clojure.core/map)
+        i (get-fn-reference 'clojure.core/inc)
+        j (get-fn-reference :clojure.string/join)]
+    (is (nil? m'))
+    (is (nil? i'))
+    (is (= (map inc (range 10))
+           (m i (range 10))))
+    (is (= "1,2" (j "," [1 2])))))
 
 (deftest test-fn-for
   (let [m' (fn-for 'map)

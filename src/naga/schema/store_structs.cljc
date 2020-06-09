@@ -57,7 +57,7 @@
        (let [[e v] p]
          (and (vartest? v) (sequential? e) (not (vector? e))))))
 
-(def operators ['and 'AND 'or 'not 'OR 'NOT])
+(def operators ['and 'AND 'or 'OR 'not 'NOT 'optional 'OPTIONAL])
 
 (s/defn op-pattern? :- s/Bool
   [[op :as pattern] :- [s/Any]]

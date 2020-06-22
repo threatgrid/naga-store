@@ -5,7 +5,7 @@
 
 ;; single element in a rule
 (def EntityPropertyElt
-  (s/cond-pre s/Keyword s/Symbol #?(:clj Long :cljs s/Num)))
+  (s/cond-pre s/Keyword s/Symbol s/Str #?(:clj Long :cljs s/Num)))
 
 ;; simple pattern containing a single element. e.g. [?v]
 (def EntityPattern [(s/one s/Symbol "entity")])

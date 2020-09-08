@@ -29,7 +29,3 @@
   [store]
   (resolve-pattern store '[?entity ?attribute ?value]))
 
-(defn node-label
-  "Returns a keyword label for a node"
-  [s n]
-  (keyword "naga" (str "id-" (node-id s n))))

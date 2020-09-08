@@ -12,7 +12,6 @@ to the documentation on each function.
 Also includes some utility functions that use the protocol:
 - `assert-schema` multi-arity function for asserting schema without all options.
 - `retrieve-contents` Reads all triples from a graph, if this is supported.
-- `node-label` Creates a keyword for representing an anonymous node in a graph, if storage needs this.
 
 ## License
 

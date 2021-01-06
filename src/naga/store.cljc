@@ -19,6 +19,12 @@
 
 (def StorageType (s/pred #(satisfies? Storage %)))
 
+(defprotocol ConnectionStore
+  (as-store [c] "Turns a native connection into a storage object"))
+
+;; default is to return the provided object
+(extend-type #?(:clj Object :cljs object) ConnectionStore (as-store [c] c))
+
 (defn assert-schema
   "Convenience function to avoid passing empty options"
   [store schema & {:as opts}]

@@ -15,7 +15,7 @@ Also includes some utility functions that use the protocol:
 
 ## License
 
-Copyright © 2021 Cisco
+Copyright © 2018-2021 Cisco
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
